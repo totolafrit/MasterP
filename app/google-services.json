@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "770475760395",
+    "firebase_url": "https://airtech-d049c-default-rtdb.firebaseio.com",
+    "project_id": "airtech-d049c",
+    "storage_bucket": "airtech-d049c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:770475760395:android:26819a5d5583a593f3600e",
+        "android_client_info": {
+          "package_name": "fr.isen.improta.airtech"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA-pJQ5RiE0NuVNO1755qwgNMYOu99y8gw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:770475760395:android:c4a2ba8e93776997f3600e",
+        "android_client_info": {
+          "package_name": "fr.isen.improta.airventure"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA-pJQ5RiE0NuVNO1755qwgNMYOu99y8gw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

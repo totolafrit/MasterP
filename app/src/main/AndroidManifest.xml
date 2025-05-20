@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Bluetooth Permissions -->
+    <!-- For Android 11 (API 30) and below. Add maxSdkVersion for modern apps. -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+
+    <!--
+        Location permission. Required for BLE scanning on Android 6.0 (API 23) to Android 11 (API 30).
+        For Android 12+, if BLUETOOTH_SCAN is granted with usesPermissionFlags="neverForLocation",
+        this might not be needed *solely* for scanning that doesn't derive physical location.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
+        tools:ignore="CoarseFineLocation" /> <!-- Keep if you only want fine and not coarse -->
+
+    <!-- Permissions for Android 12 (API 31) and above -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AIRTECH"
+        tools:targetApi="31">
+
+        <activity
+            android:name=".DeviceActivity"
+            android:exported="false"
+            android:label="@string/title_activity_device"
+            android:theme="@style/Theme.AIRTECH"
+             />
+        <!-- Removed the duplicate DeviceActivity entry -->
+
+        <activity
+            android:name=".ScanActivity"
+            android:exported="false"
+            android:label="@string/title_activity_ble_scan"
+            android:theme="@style/Theme.AIRTECH" />
+        <!--
+            Removed tools:ignore="Instantiatable,MissingClass".
+            You MUST fix the underlying issues if ScanActivity is not found or not instantiatable.
+            Ensure:
+            1. The class 'ScanActivity' exists in the correct package.
+            2. The name in android:name=".ScanActivity" is correct (including typos and case).
+            3. ScanActivity is a concrete class and can be instantiated (e.g., not abstract, has a valid constructor).
+        -->
+
+        <!-- LoginActivity is the launch screen -->
+        <activity
+            android:name=".LoginActivity"
+            android:exported="true"
+            android:label="@string/title_activity_login"
+            android:theme="@style/Theme.AIRTECH">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- MainActivity is no longer used as the main entry point but might still be used elsewhere -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.AIRTECH" />
+    </application>
+
+</manifest>
