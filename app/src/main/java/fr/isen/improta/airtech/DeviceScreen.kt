@@ -46,43 +46,45 @@ fun DeviceScreen(
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Infos périphérique
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)),
-                elevation = CardDefaults.cardElevation(4.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Nom : $name", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    Text("Adresse : $address", fontSize = 14.sp, color = Color.Gray)
-                    Text("RSSI : $rssi dBm", fontSize = 14.sp, color = Color.Gray)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Statut : $connectionStatus", fontWeight = FontWeight.Medium)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        enabled = !isConnected,
-                        onClick = onConnectClick,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Se connecter")
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = isSubscribed,
-                            onCheckedChange = onToggleSubscription
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Recevoir notifications")
+            // Bloc de connexion (visible uniquement si non connecté)
+            if (!isConnected) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)),
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("Nom : $name", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text("Adresse : $address", fontSize = 14.sp, color = Color.Gray)
+                        Text("RSSI : $rssi dBm", fontSize = 14.sp, color = Color.Gray)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Statut : $connectionStatus", fontWeight = FontWeight.Medium)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            enabled = !isConnected,
+                            onClick = onConnectClick,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Se connecter")
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = isSubscribed,
+                                onCheckedChange = onToggleSubscription
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Recevoir notifications")
+                        }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Affichage valeurs uniquement si connecté
+            // Bloc affichage des données CO2 et PM (visible uniquement si connecté)
             if (isConnected) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
