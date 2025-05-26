@@ -18,8 +18,9 @@ import java.util.UUID
 class DeviceActivity : ComponentActivity() {
 
     private var gatt: BluetoothGatt? = null
-    private var co2Char: BluetoothGattCharacteristic? = null
-    private var pmChar: BluetoothGattCharacteristic? = null
+//    private var co2Char: BluetoothGattCharacteristic? = null
+//    private var pmChar: BluetoothGattCharacteristic? = null
+    private var switchChar: BluetoothGattCharacteristic? = null
 
     private val co2Value = mutableStateOf(0)
     private val pmValue = mutableStateOf(0)
@@ -77,16 +78,31 @@ class DeviceActivity : ComponentActivity() {
             }
 
             override fun onServicesDiscovered(gattParam: BluetoothGatt, status: Int) {
-                val co2ServiceUUID = UUID.fromString("00001234-0000-1000-8000-00805f9b34fb")
-                val co2CharUUID = UUID.fromString("00005678-0000-1000-8000-00805f9b34fb")
-                val pmCharUUID = UUID.fromString("00008765-0000-1000-8000-00805f9b34fb")
 
-                val service = gattParam.services.find { it.uuid == co2ServiceUUID }
-                co2Char = service?.getCharacteristic(co2CharUUID)
-                pmChar = service?.getCharacteristic(pmCharUUID)
+                gattParam.services.forEach { service ->
+                    Log.d("BLE", "Service: ${service.uuid}")
+                    service.characteristics.forEach { char ->
+                        Log.d("BLE", " └ Char: ${char.uuid}")
+                    }
+                }
 
-                Log.d("BLE", "CO2 char = $co2Char")
-                Log.d("BLE", "PM char = $pmChar")
+//                val co2ServiceUUID = UUID.fromString("00001234-0000-1000-8000-00805f9b34fb")
+//                val co2CharUUID = UUID.fromString("00005678-0000-1000-8000-00805f9b34fb")
+//                val pmCharUUID = UUID.fromString("00008765-0000-1000-8000-00805f9b34fb")
+
+                val serviceUUID = UUID.fromString("0000feed-cc7a-482a-984a-7f2ed5b3e58f")
+                val switchCharUUID = UUID.fromString("00001234-8e22-4541-9d4c-21edae82ed19")
+
+                val service = gattParam.services.find { it.uuid == serviceUUID }
+                switchChar = service?.getCharacteristic(switchCharUUID)
+
+                //val service = gattParam.services.find { it.uuid == co2ServiceUUID }
+                //co2Char = service?.getCharacteristic(co2CharUUID)
+                //pmChar = service?.getCharacteristic(pmCharUUID)
+
+                Log.d("BLE", "CO2 char = $serviceUUID")
+                Log.d("BLE", "PM char = $switchCharUUID")
+
 
                 // Active automatiquement les notifications dès que les caractéristiques sont récupérées
                 runOnUiThread {
@@ -95,60 +111,50 @@ class DeviceActivity : ComponentActivity() {
             }
 
             override fun onCharacteristicChanged(
-                gattParam: BluetoothGatt,
+                gatt: BluetoothGatt,
                 characteristic: BluetoothGattCharacteristic
             ) {
-                when (characteristic.uuid) {
-                    co2Char?.uuid -> {
-                        if (skipNextCO2Notification) {
-                            skipNextCO2Notification = false
-                            Log.d("BLE", "Notification CO2 ignorée")
-                            return
-                        }
-                        val raw = characteristic.value
-                        if (raw.size >= 2) {
-                            val ppm = (raw[0].toInt() and 0xFF) or ((raw[1].toInt() and 0xFF) shl 8)
-                            runOnUiThread {
-                                co2Value.value = ppm
-                            }
-                            Log.d("BLE", "📥 CO2 → $ppm ppm")
-                        }
+                val raw = characteristic.value
+                val hex = raw.joinToString(" ") { String.format("%02X", it) }
+                Log.d("BLE", "📥 Notification reçue (${raw.size} octets) : $hex")
+
+                if (raw.size >= 2) {
+                    val co2 = (raw[1].toInt() and 0xFF shl 8) or (raw[0].toInt() and 0xFF)
+                    Log.d("BLE", "CO2 partiel = $co2 ppm")
+                }
+
+
+
+                if (raw.size >= 4) {
+                    val co2 = (raw[1].toInt() and 0xFF shl 8) or (raw[0].toInt() and 0xFF)
+                    val pm = (raw[3].toInt() and 0xFF shl 8) or (raw[2].toInt() and 0xFF)
+
+                    runOnUiThread {
+                        co2Value.value = co2
+                        pmValue.value = pm
                     }
-                    pmChar?.uuid -> {
-                        if (skipNextPMNotification) {
-                            skipNextPMNotification = false
-                            Log.d("BLE", "Notification PM ignorée")
-                            return
-                        }
-                        val raw = characteristic.value
-                        if (raw.size >= 2) {
-                            val pm = (raw[0].toInt() and 0xFF) or ((raw[1].toInt() and 0xFF) shl 8)
-                            runOnUiThread {
-                                pmValue.value = pm
-                            }
-                            Log.d("BLE", "📥 PM → $pm µg/m3")
-                        }
-                    }
+
+                    Log.d("BLE", "📊 CO2 = $co2 ppm | PM = $pm pcs/0.01cf")
+                } else {
+                    Log.w("BLE", "⚠️ Données insuffisantes pour décoder (seulement ${raw.size} octets)")
                 }
             }
+
         })
     }
 
     @SuppressLint("MissingPermission")
     private fun toggleNotifications(enable: Boolean) {
-        co2Char?.let { char ->
+        switchChar?.let { char ->
             gatt?.setCharacteristicNotification(char, enable)
             val descriptor = char.getDescriptor(CCCD_UUID) ?: return
-            descriptor.value = if (enable) BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE else BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
+            descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
             gatt?.writeDescriptor(descriptor)
+
+            Log.d("BLE", "🔔 Notification activée sur switchChar: ${char.uuid}")
         }
 
-        pmChar?.let { char ->
-            gatt?.setCharacteristicNotification(char, enable)
-            val descriptor = char.getDescriptor(CCCD_UUID) ?: return
-            descriptor.value = if (enable) BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE else BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
-            gatt?.writeDescriptor(descriptor)
-        }
+
 
         runOnUiThread {
             isSubscribed.value = enable
