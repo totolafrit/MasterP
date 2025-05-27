@@ -25,6 +25,7 @@ import java.util.UUID
 class DeviceActivity : ComponentActivity() {
 
     private var gatt: BluetoothGatt? = null
+
     private var switchChar: BluetoothGattCharacteristic? = null
 
     private val co2Value = mutableStateOf(0)
@@ -110,14 +111,16 @@ class DeviceActivity : ComponentActivity() {
                     }
                 }
 
-                val serviceUUID = UUID.fromString("0000feed-cc7a-482a-984a-7f2ed5b3e58f")
+  val serviceUUID = UUID.fromString("0000feed-cc7a-482a-984a-7f2ed5b3e58f")
                 val switchCharUUID = UUID.fromString("00001234-8e22-4541-9d4c-21edae82ed19")
 
                 val service = gattParam.services.find { it.uuid == serviceUUID }
                 switchChar = service?.getCharacteristic(switchCharUUID)
 
+
                 Log.d("BLE", "CO2 char = $serviceUUID")
                 Log.d("BLE", "PM char = $switchCharUUID")
+
 
                 runOnUiThread {
                     toggleNotifications(true)
@@ -132,13 +135,16 @@ class DeviceActivity : ComponentActivity() {
                 val hex = raw.joinToString(" ") { String.format("%02X", it) }
                 Log.d("BLE", "📥 Notification reçue (${raw.size} octets) : $hex")
 
+
                 if (raw.size >= 4) {
                     val pm = (raw[1].toInt() and 0xFF shl 8) or (raw[0].toInt() and 0xFF)
                     val co2 = (raw[3].toInt() and 0xFF shl 8) or (raw[2].toInt() and 0xFF)
 
+
                     runOnUiThread {
                         co2Value.value = co2
                         pmValue.value = pm
+
                     }
 
                     Log.d("BLE", "📊 CO2 = $co2 ppm | PM = $pm pcs/0.01cf")
@@ -158,10 +164,12 @@ class DeviceActivity : ComponentActivity() {
                             "La concentration en CO2 a dépassé 1200 pcs/0.01cf: $pm"
                         )
                     }
+
                 } else {
                     Log.w("BLE", "⚠️ Données insuffisantes pour décoder (seulement ${raw.size} octets)")
                 }
             }
+
         })
     }
 
@@ -200,6 +208,8 @@ class DeviceActivity : ComponentActivity() {
 
             Log.d("BLE", "🔔 Notification activée sur switchChar: ${char.uuid}")
         }
+
+
 
         runOnUiThread {
             isSubscribed.value = enable
