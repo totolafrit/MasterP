@@ -1,4 +1,4 @@
-package fr.isen.improta.airtech
+package fr.isen.improta.airtech.Activity
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

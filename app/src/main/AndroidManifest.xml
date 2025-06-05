@@ -31,7 +31,7 @@
         tools:targetApi="31">
 
         <activity
-            android:name=".DeviceActivity"
+            android:name=".Activity.DeviceActivity"
             android:exported="false"
             android:label="@string/title_activity_device"
             android:theme="@style/Theme.AIRTECH"
@@ -39,7 +39,7 @@
         <!-- Removed the duplicate DeviceActivity entry -->
 
         <activity
-            android:name=".ScanActivity"
+            android:name=".Activity.ScanActivity"
             android:exported="false"
             android:label="@string/title_activity_ble_scan"
             android:theme="@style/Theme.AIRTECH" />
@@ -54,7 +54,7 @@
 
         <!-- LoginActivity is the launch screen -->
         <activity
-            android:name=".LoginActivity"
+            android:name=".Activity.LoginActivity"
             android:exported="true"
             android:label="@string/title_activity_login"
             android:theme="@style/Theme.AIRTECH">
@@ -66,7 +66,7 @@
 
         <!-- MainActivity is no longer used as the main entry point but might still be used elsewhere -->
         <activity
-            android:name=".MainActivity"
+            android:name=".Activity.MainActivity"
             android:exported="false"
             android:label="@string/app_name"
             android:theme="@style/Theme.AIRTECH" />

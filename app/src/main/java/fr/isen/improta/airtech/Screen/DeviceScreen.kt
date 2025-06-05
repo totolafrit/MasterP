@@ -1,8 +1,5 @@
-package fr.isen.improta.airtech
+package fr.isen.improta.airtech.Screen
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -13,8 +10,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PaintingStyle.Companion.Fill
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -198,139 +198,218 @@ class HistoryState {
 }
 
 @Composable
-fun GraphView(title: String, values: List<Int>, scaleFactor: Float) {
+fun GraphView(
+    title: String,
+    values: List<Int>,
+    scaleFactor: Float
+) {
     if (values.isEmpty()) return
 
     Canvas(
         modifier = Modifier
             .fillMaxWidth()
-            .height(250.dp)
+            .height(260.dp)
+            .padding(horizontal = 12.dp)
     ) {
         val canvasWidth = size.width
         val canvasHeight = size.height
 
-        val paddingLeft = 60f
-        val paddingBottom = 50f
-        val paddingTop = 30f
-        val paddingRight = 20f
+        // Marges pour laisser de la place aux labels
+        val marginLeft = 50f
+        val marginBottom = 50f
+        val marginTop = 40f
+        val marginRight = 20f
 
-        val usableWidth = canvasWidth - paddingLeft - paddingRight
-        val usableHeight = canvasHeight - paddingTop - paddingBottom
+        val plotWidth = canvasWidth - marginLeft - marginRight
+        val plotHeight = canvasHeight - marginTop - marginBottom
 
-        // Paint pour texte
-        val paint = android.graphics.Paint().apply {
-            color = android.graphics.Color.DKGRAY
-            textSize = 40f
-            isAntiAlias = true
-            textAlign = android.graphics.Paint.Align.RIGHT
-            typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
-        }
-
-        // Fond clair
+        // 1) Fond blanc + grille horizontale
         drawRect(
-            color = Color(0xFFF0F0F0),
-            topLeft = Offset(paddingLeft, paddingTop),
-            size = androidx.compose.ui.geometry.Size(usableWidth, usableHeight)
+            color = Color.White,
+            topLeft = Offset(0f, 0f),
+            size = size
         )
 
-        // Grille horizontale (5 lignes)
-        val gridLines = 5
-        for (i in 0..gridLines) {
-            val y = paddingTop + i * usableHeight / gridLines
+        val gridPaint = android.graphics.Paint().apply {
+            color = android.graphics.Color.LTGRAY
+            strokeWidth = 1f
+            isAntiAlias = true
+        }
+        val horizontalLines = 5
+        for (i in 0..horizontalLines) {
+            val y = marginTop + i * (plotHeight / horizontalLines)
             drawLine(
-                color = Color(0xFFCCCCCC),
-                start = Offset(paddingLeft, y),
-                end = Offset(canvasWidth - paddingRight, y),
+                color = Color.LightGray,
+                start = Offset(marginLeft, y),
+                end = Offset(canvasWidth - marginRight, y),
                 strokeWidth = 1f
             )
-            // Valeurs graduées sur l'axe Y
-            val labelValue = ((gridLines - i) * scaleFactor / gridLines).toInt()
+
+            // Label Y
+            val labelValue = ((horizontalLines - i) * scaleFactor / horizontalLines).toInt()
             drawContext.canvas.nativeCanvas.drawText(
                 "$labelValue",
-                paddingLeft - 10f,
-                y + 12f,
-                paint
+                marginLeft - 8f,
+                y + 4f,
+                gridPaint.apply {
+                    color = android.graphics.Color.DKGRAY
+                    textSize = 32f
+                    textAlign = android.graphics.Paint.Align.RIGHT
+                    typeface = android.graphics.Typeface.create(
+                        android.graphics.Typeface.DEFAULT,
+                        android.graphics.Typeface.NORMAL
+                    )
+                }
             )
         }
 
-        // Axe X et Y
+        // 2) Axes X et Y (lignes épaisses, bouts arrondis)
         drawLine(
-            color = Color.Black,
-            start = Offset(paddingLeft, paddingTop),
-            end = Offset(paddingLeft, canvasHeight - paddingBottom),
-            strokeWidth = 3f
+            color = Color(0xFF333333),
+            start = Offset(marginLeft, marginTop),
+            end = Offset(marginLeft, canvasHeight - marginBottom),
+            strokeWidth = 5f,
+            cap = StrokeCap.Round
         )
         drawLine(
-            color = Color.Black,
-            start = Offset(paddingLeft, canvasHeight - paddingBottom),
-            end = Offset(canvasWidth - paddingRight, canvasHeight - paddingBottom),
-            strokeWidth = 3f
+            color = Color(0xFF333333),
+            start = Offset(marginLeft, canvasHeight - marginBottom),
+            end = Offset(canvasWidth - marginRight, canvasHeight - marginBottom),
+            strokeWidth = 5f,
+            cap = StrokeCap.Round
         )
 
-        // Points espacés sur X
+        // 3) Calcul des points de la courbe
         val pointCount = values.size
-        val gapX = if (pointCount > 1) usableWidth / (pointCount - 1) else usableWidth
+        val gapX = if (pointCount > 1) plotWidth / (pointCount - 1) else plotWidth
+        val scaleY = plotHeight / scaleFactor
 
-        // Calcul échelle Y
-        val scaleY = usableHeight / scaleFactor
+        // Liste coordonées X,Y de la courbe
+        val coords = values.mapIndexed { index, value ->
+            val x = marginLeft + gapX * index
+            val y = canvasHeight - marginBottom - value * scaleY
+            Offset(x, y)
+        }
 
-        // Dessiner la ligne avec courbure lissée
-        val lineColor = if (title == "CO2") Color(0xFFE64A19) else Color(0xFF512DA8)
-        val strokeWidth = 4f
+        // 4) Construction du Path de la zone sous la courbe (area chart)
+        val areaPath = androidx.compose.ui.graphics.Path().apply {
+            if (coords.isNotEmpty()) {
+                // 4.1) Démarrer au bas du premier point
+                moveTo(coords[0].x, canvasHeight - marginBottom)
 
-        for (i in 1 until pointCount) {
-            val x1 = paddingLeft + gapX * (i - 1)
-            val y1 = canvasHeight - paddingBottom - values[i - 1] * scaleY
-            val x2 = paddingLeft + gapX * i
-            val y2 = canvasHeight - paddingBottom - values[i] * scaleY
+                // 4.2) Remonter jusqu'au premier point de la courbe
+                lineTo(coords[0].x, coords[0].y)
 
-            drawLine(
-                color = lineColor,
-                start = Offset(x1, y1),
-                end = Offset(x2, y2),
-                strokeWidth = strokeWidth,
-                cap = StrokeCap.Round
+                // 4.3) Ajouter tous les points intermédiaires
+                for (i in 1 until coords.size) {
+                    // Pour chaque segment, on peut lisser avec un simple Bézier au point médian
+                    val prev = coords[i - 1]
+                    val curr = coords[i]
+                    val midX = (prev.x + curr.x) / 2
+                    val midY = (prev.y + curr.y) / 2
+
+                    quadraticBezierTo(
+                        x1 = prev.x, y1 = prev.y,
+                        x2 = midX, y2 = midY
+                    )
+                    quadraticBezierTo(
+                        x1 = curr.x, y1 = curr.y,
+                        x2 = curr.x, y2 = curr.y
+                    )
+                }
+
+                // 4.4) Redescendre au fond sous le dernier point
+                lineTo(coords.last().x, canvasHeight - marginBottom)
+
+                // 4.5) Fermer le polygone (retour au point de départ, bas du premier point)
+                close()
+            }
+        }
+
+        // 5) Remplissage de la zone (dégradé vertical)
+        drawPath(
+            path = areaPath,
+            brush = Brush.verticalGradient(
+                colors = listOf(Color(0xFFBBDEFB), Color.Transparent),
+                startY = marginTop,
+                endY = canvasHeight - marginBottom
+            )
+        )
+
+        // 6) Tracé de la courbe lissée par-dessus (ligne bleue ou rouge)
+        val linePath = androidx.compose.ui.graphics.Path().apply {
+            if (coords.isNotEmpty()) {
+                // 6.1) Départ : premier point
+                moveTo(coords[0].x, coords[0].y)
+
+                // 6.2) Bézier pour tous les segments
+                for (i in 1 until coords.size) {
+                    val prev = coords[i - 1]
+                    val curr = coords[i]
+                    val midX = (prev.x + curr.x) / 2
+                    val midY = (prev.y + curr.y) / 2
+
+                    quadraticBezierTo(
+                        x1 = prev.x, y1 = prev.y,
+                        x2 = midX, y2 = midY
+                    )
+                    quadraticBezierTo(
+                        x1 = curr.x, y1 = curr.y,
+                        x2 = curr.x, y2 = curr.y
+                    )
+                }
+            }
+        }
+
+        drawPath(
+            path = linePath,
+            color = if (title == "CO2") Color(0xFF1976D2) else Color(0xFFD32F2F),
+            style = Stroke(width = 4f, cap = StrokeCap.Round)
+        )
+
+        // 7) Points (petits carrés, ici on peut soit remplir, soit tracer le contour)
+        coords.forEach { point ->
+            drawRect(
+                color = if (title == "CO2") Color(0xFF1976D2) else Color(0xFFD32F2F),
+                topLeft = Offset(point.x - 6f, point.y - 6f),
+                size = androidx.compose.ui.geometry.Size(12f, 12f),
+                style = Stroke(width = 2f) // contour carré de 2px
             )
         }
 
-        // Dessiner les points
-        for (i in 0 until pointCount) {
-            val x = paddingLeft + gapX * i
-            val y = canvasHeight - paddingBottom - values[i] * scaleY
-            drawCircle(
-                color = lineColor,
-                radius = 8f,
-                center = Offset(x, y)
+        // 8) Titre et dernière valeur
+        drawContext.canvas.nativeCanvas.apply {
+            // 8.1) Titre en haut à gauche
+            val titlePaint = android.graphics.Paint().apply {
+                color = android.graphics.Color.BLACK
+                textSize = 44f
+                isAntiAlias = true
+                typeface = android.graphics.Typeface.create(
+                    android.graphics.Typeface.DEFAULT,
+                    android.graphics.Typeface.BOLD
+                )
+                textAlign = android.graphics.Paint.Align.LEFT
+            }
+            drawText(
+                title,
+                marginLeft,
+                marginTop - 12f,
+                titlePaint
+            )
+
+            // 8.2) Dernière valeur en haut à droite
+            val valPaint = android.graphics.Paint().apply {
+                color = android.graphics.Color.BLACK
+                textSize = 36f
+                isAntiAlias = true
+                textAlign = android.graphics.Paint.Align.RIGHT
+            }
+            drawText(
+                "${values.last()}",
+                canvasWidth - marginRight,
+                marginTop - 12f,
+                valPaint
             )
         }
-
-        // Titre en haut à gauche
-        val titlePaint = android.graphics.Paint().apply {
-            color = android.graphics.Color.BLACK
-            textSize = 50f
-            isAntiAlias = true
-            typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
-            textAlign = android.graphics.Paint.Align.LEFT
-        }
-        drawContext.canvas.nativeCanvas.drawText(
-            title,
-            paddingLeft,
-            paddingTop - 10f,
-            titlePaint
-        )
-
-        // Dernière valeur en haut à droite
-        val valuePaint = android.graphics.Paint().apply {
-            color = android.graphics.Color.BLACK
-            textSize = 40f
-            isAntiAlias = true
-            textAlign = android.graphics.Paint.Align.RIGHT
-        }
-        drawContext.canvas.nativeCanvas.drawText(
-            "${values.last()}",
-            canvasWidth - paddingRight,
-            paddingTop - 10f,
-            valuePaint
-        )
     }
 }

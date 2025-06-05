@@ -1,4 +1,4 @@
-package fr.isen.improta.airtech
+package fr.isen.improta.airtech.Activity
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -21,6 +21,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
+import fr.isen.improta.airtech.Screen.BLEDevice
+import fr.isen.improta.airtech.Screen.ScanScreen
 import fr.isen.improta.airtech.ui.theme.AirtechTheme
 
 class ScanActivity : ComponentActivity() {

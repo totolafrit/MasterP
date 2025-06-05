@@ -1,4 +1,4 @@
-package fr.isen.improta.airtech
+package fr.isen.improta.airtech.Screen
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -34,7 +34,7 @@ fun ScanScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("AndroidSmartDevice") },
+                title = { Text("Sélectionez Votre Appareil") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Retour", tint = Color.White)

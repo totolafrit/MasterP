@@ -1,4 +1,4 @@
-package fr.isen.improta.airtech
+package fr.isen.improta.airtech.Activity
 
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
@@ -19,6 +19,7 @@ import androidx.activity.compose.setContent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.compose.runtime.mutableStateOf
+import fr.isen.improta.airtech.Screen.DeviceScreen
 import fr.isen.improta.airtech.ui.theme.AirtechTheme
 import java.util.UUID
 

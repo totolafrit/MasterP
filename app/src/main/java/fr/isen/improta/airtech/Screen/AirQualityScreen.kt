@@ -1,4 +1,4 @@
-package fr.isen.improta.airtech
+package fr.isen.improta.airtech.Screen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
